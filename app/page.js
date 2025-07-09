@@ -9,6 +9,7 @@ import RecoveryCode from './components/auth/RecoveryCode';
 import NewPassword from './components/auth/NewPassword';
 import PasswordUpdated from './components/auth/PasswordUpdated';
 import LoadingScreen from './components/auth/LoadingScreen';
+import Dashboard from './components/Dashboard';
 
 export default function Home() {
   const {
@@ -24,6 +25,7 @@ export default function Home() {
     forgotPasswordEmail,
     username,
     isLoading,
+    isAuthenticated,
     
     // Funciones de manejo
     handleEmailSubmit,
@@ -36,11 +38,17 @@ export default function Home() {
     toggleForm,
     handleForgotPassword,
     handleCancelForgotPassword,
+    handleLogout,
   } = useAuth();
 
   // Pantalla de loading
   if (isLoading) {
     return <LoadingScreen />;
+  }
+
+  // Si está autenticado, mostrar el dashboard
+  if (isAuthenticated) {
+    return <Dashboard onLogout={handleLogout} />;
   }
 
   // Pantalla de verificación de correo electrónico

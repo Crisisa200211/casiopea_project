@@ -35,6 +35,7 @@ export const useAuth = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showPasswordUpdated, setShowPasswordUpdated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // Campos adicionales para registro
   const [firstName, setFirstName] = useState('');
@@ -97,6 +98,11 @@ export const useAuth = () => {
     setConfirmPassword('');
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    clearAllStates();
+  };
+
   const toggleForm = () => {
     setIsRegister(!isRegister);
     // Limpiar todos los estados y errores al cambiar entre login/registro
@@ -151,7 +157,8 @@ export const useAuth = () => {
   // Manejo de inicio de sesión después de verificación
   const handleStartSession = () => {
     console.log('Iniciando sesión...');
-    handleBackToLogin();
+    setIsAuthenticated(true);
+    clearAllStates();
   };
 
   // Manejo de solicitud de contraseña olvidada
@@ -293,9 +300,9 @@ export const useAuth = () => {
         // Simular tiempo de carga (puedes ajustar este tiempo)
         setTimeout(() => {
           setIsLoading(false);
+          setIsAuthenticated(true);
           console.log('Redirigiendo al dashboard...');
-          // Aquí redirigirías al dashboard o página principal
-        }, 3000);
+        }, 2000);
       } else {
         setError('Usuario y/o contraseña incorrectos');
       }
@@ -321,6 +328,7 @@ export const useAuth = () => {
     showNewPassword,
     showPasswordUpdated,
     isLoading,
+    isAuthenticated,
     firstName,
     lastName,
     maternalLastName,
@@ -373,6 +381,7 @@ export const useAuth = () => {
     handleBackToLogin,
     handleCancelForgotPassword,
     clearAllStates,
+    handleLogout,
     
     // Funciones de manejo de formularios
     handleEmailSubmit,
