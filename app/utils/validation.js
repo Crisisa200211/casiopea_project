@@ -71,5 +71,11 @@ export const VALID_RECOVERY_CODE = '12345';
 // Credenciales de login válidas (simulado)
 export const VALID_CREDENTIALS = {
   username: 'crispis111102@gmail.com',
-  password: '1'
+  password: 'Admin123!'
+};
+
+
+export const DEV_CREDENTIALS = {
+  username: 'admin@test.com',
+  password: '123'
 };

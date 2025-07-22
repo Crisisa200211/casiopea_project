@@ -75,6 +75,9 @@ export default function LoginRegister({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('🚀 LoginRegister handleSubmit ejecutándose');
+    console.log('📝 formData que se enviará:', formData);
+    console.log('🔄 isRegister:', isRegister);
     onSubmit(formData);
   };
 

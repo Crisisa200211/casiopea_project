@@ -11,6 +11,7 @@ import {
   validateEmail,
   validateCode,
   VALID_CREDENTIALS,
+  DEV_CREDENTIALS,
   VALID_EMAILS
 } from '../utils/validation';
 
@@ -243,6 +244,10 @@ export const useAuth = () => {
 
   // Manejo de envío de formulario principal (login/registro)
   const handleSubmit = (formData) => {
+    console.log('=== INICIO DE handleSubmit ===');
+    console.log('isRegister:', isRegister);
+    console.log('formData recibida:', formData);
+    
     if (isRegister) {
       // Validación para registro
       const { firstName, lastName, maternalLastName, phoneNumber, username, password, confirmPassword } = formData;
@@ -292,18 +297,29 @@ export const useAuth = () => {
       console.log('Login attempt', { username, password });
       
       // Simular validación de credenciales
-      if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
+      const isValidMain = username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password;
+      const isValidDev = username === DEV_CREDENTIALS.username && password === DEV_CREDENTIALS.password;
+      
+      if (isValidMain || isValidDev) {
         setError('');
-        setIsLoading(true);
-        console.log('Login exitoso - Mostrando loading...');
+        console.log('✅ Credenciales válidas - Autenticando inmediatamente...');
+        setIsAuthenticated(true);
+        console.log('✅ isAuthenticated establecido a true');
         
-        // Simular tiempo de carga (puedes ajustar este tiempo)
+        // Comentando el timeout temporalmente para testing
+        /*
+        setIsLoading(true);
         setTimeout(() => {
+          console.log('Timeout completado, estableciendo isAuthenticated a true');
           setIsLoading(false);
           setIsAuthenticated(true);
-          console.log('Redirigiendo al dashboard...');
-        }, 2000);
+          console.log('Usuario autenticado correctamente, isAuthenticated establecido a true');
+        }, 1000);
+        */
       } else {
+        console.log('Credenciales incorrectas:', { username, password });
+        console.log('Esperadas Main:', VALID_CREDENTIALS);
+        console.log('Esperadas Dev:', DEV_CREDENTIALS);
         setError('Usuario y/o contraseña incorrectos');
       }
     }
