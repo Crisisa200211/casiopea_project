@@ -16,8 +16,12 @@ import {
   DEV_CREDENTIALS,
   VALID_EMAILS
 } from '../lib/constants/auth';
+import { useAuthJotaiContext } from '../contexts/AuthJotaiContext';
 
 export const useAuth = () => {
+  // Hook de Jotai para autenticación real
+  const authJotai = useAuthJotaiContext();
+
   // Estados principales
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -52,18 +56,23 @@ export const useAuth = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
-  // Inicializar estado desde localStorage
+  // Estados de loading específicos para recuperación de contraseña
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  // Inicializar estado desde Jotai
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    // Sincronizar con el estado de Jotai
+    if (authJotai.isAuthenticated) {
       setIsAuthenticated(true);
     }
-  }, []);
+  }, [authJotai.isAuthenticated]);
 
-  // Guardar estado cuando cambia la autenticación
+  // Guardar estado cuando cambia la autenticación (mantener compatibilidad)
   useEffect(() => {
     if (isAuthenticated) {
-      const userData = {
+      const userData = authJotai.user || {
         email: username,
         name: 'Usuario Demo',
         role: 'Administrador'
@@ -72,7 +81,7 @@ export const useAuth = () => {
     } else {
       localStorage.removeItem('user');
     }
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, username, authJotai.user]);
 
   // Funciones de toggle
   const togglePassword = () => setShowPassword(!showPassword);
@@ -109,7 +118,7 @@ export const useAuth = () => {
     setShowRecoveryCodeSent(false);
     setShowNewPassword(false);
     setShowPasswordUpdated(false);
-    setIsLoading(false); // Limpiar loading
+    setIsLoading(false);
     setForgotPasswordEmail('');
     setRecoveryCode('');
     setNewPassword('');
@@ -121,9 +130,16 @@ export const useAuth = () => {
     setMaternalLastName('');
     setPhoneNumber('');
     setConfirmPassword('');
+    
+    // Limpiar localStorage adicional
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user');
+    }
   };
 
   const handleLogout = () => {
+    // Usar el logout de Jotai para limpiar estado global
+    authJotai.logout();
     setIsAuthenticated(false);
     clearAllStates();
   };
@@ -191,7 +207,7 @@ export const useAuth = () => {
   };
 
   // Manejo de envío de email de recuperación
-  const handleSendRecoveryEmail = (email) => {
+  const handleSendRecoveryEmail = async (email) => {
     if (!email) {
       setError('El correo electrónico es obligatorio');
       return;
@@ -202,44 +218,66 @@ export const useAuth = () => {
       return;
     }
     
-    // Validar que el email esté registrado
-    if (!VALID_EMAILS.includes(email)) {
-      setError('Este correo electrónico no está registrado en el sistema');
-      return;
-    }
-    
-    // Guardar el email para usarlo después
-    setForgotPasswordEmail(email);
+    // Usar la API real para enviar código
+    setSendingCode(true);
     setError('');
-    setShowForgotPassword(false);
-    setShowRecoveryCodeSent(true);
+
+    try {
+      const result = await authJotai.sendCode(email);
+
+      if (result.success) {
+        // Guardar el email para usarlo después
+        setForgotPasswordEmail(email);
+        setError('');
+        setShowForgotPassword(false);
+        setShowRecoveryCodeSent(true);
+      } else {
+        setError(result.error || 'Error enviando código');
+      }
+    } catch (error) {
+      console.error('Error en handleSendRecoveryEmail:', error);
+      setError('Error inesperado enviando código');
+    } finally {
+      setSendingCode(false);
+    }
   };
 
   // Manejo de verificación de código de recuperación
-  const handleVerifyRecoveryCode = (code) => {
+  const handleVerifyRecoveryCode = async (code) => {
     if (!code) {
       setError('El código es obligatorio');
       return;
     }
     
     if (!validateCode(code)) {
-      setError('El código debe tener 5 dígitos');
+      setError('El código debe tener 6 dígitos');
       return;
     }
     
-    // Simular validación del código
-    if (code !== '12345') {
-      setError('Código incorrecto');
-      return;
-    }
-    
+    // Usar la API real para verificar código
+    setVerifyingCode(true);
     setError('');
-    setShowRecoveryCodeSent(false);
-    setShowNewPassword(true);
+
+    try {
+      const result = await authJotai.verifyCode(forgotPasswordEmail, code);
+
+      if (result.success) {
+        setError('');
+        setShowRecoveryCodeSent(false);
+        setShowNewPassword(true);
+      } else {
+        setError(result.error || 'Código incorrecto');
+      }
+    } catch (error) {
+      console.error('Error en handleVerifyRecoveryCode:', error);
+      setError('Error inesperado verificando código');
+    } finally {
+      setVerifyingCode(false);
+    }
   };
 
   // Manejo de cambio de contraseña
-  const handleChangePassword = ({ newPassword: newPwd, confirmNewPassword: confirmNewPwd }) => {
+  const handleChangePassword = async ({ newPassword: newPwd, confirmNewPassword: confirmNewPwd }) => {
     if (!newPwd || !confirmNewPwd) {
       setError('Todos los campos son obligatorios');
       return;
@@ -256,13 +294,30 @@ export const useAuth = () => {
       return;
     }
     
+    // Usar la API real para resetear contraseña
+    setChangingPassword(true);
     setError('');
-    setShowNewPassword(false);
-    setShowPasswordUpdated(true);
+
+    try {
+      const result = await authJotai.changePassword(forgotPasswordEmail, newPwd);
+
+      if (result.success) {
+        setError('');
+        setShowNewPassword(false);
+        setShowPasswordUpdated(true);
+      } else {
+        setError(result.error || 'Error cambiando contraseña');
+      }
+    } catch (error) {
+      console.error('Error en handleChangePassword:', error);
+      setError('Error inesperado cambiando contraseña');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   // Manejo de envío de formulario principal (login/registro)
-  const handleSubmit = (formData) => {
+  const handleSubmit = async (formData) => {
     if (isRegister) {
       // Validación para registro
       const { firstName, lastName, maternalLastName, phoneNumber, username, password, confirmPassword } = formData;
@@ -288,8 +343,31 @@ export const useAuth = () => {
         return;
       }
       
+      // Usar la API real para registro
+      setIsLoading(true);
       setError('');
-      setShowVerification(true);
+
+      try {
+        const registerResult = await authJotai.register({
+          email: username,
+          firstName: firstName,
+          lastName: `${lastName} ${maternalLastName}`.trim(), // Combinar apellido paterno y materno
+          phoneNumber: phoneNumber,
+          password: password
+        });
+
+        if (registerResult.success) {
+          setError('');
+          setShowVerification(true);
+        } else {
+          setError(registerResult.error || 'Error en el registro');
+        }
+      } catch (error) {
+        console.error('Error en handleSubmit registro:', error);
+        setError('Error inesperado durante el registro');
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       // Validación para login
       const { username, password } = formData;
@@ -298,32 +376,28 @@ export const useAuth = () => {
         setError('Todos los campos son obligatorios');
         return;
       }
-      
-      // Simular validación de credenciales
-      const isValidMain = username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password;
-      const isValidDev = username === DEV_CREDENTIALS.username && password === DEV_CREDENTIALS.password;
-      
-      if (isValidMain || isValidDev) {
-        setError('');
 
-        setIsAuthenticated(true);
+      // Usar la API real para login
+      setIsLoading(true);
+      setError('');
 
-        
-        // Comentando el timeout temporalmente para testing
-        /*
-        setIsLoading(true);
-        setTimeout(() => {
+      try {
+        const loginResult = await authJotai.login({
+          email: username, // El hook espera email
+          password: password
+        });
 
-          setIsLoading(false);
+        if (loginResult.success) {
           setIsAuthenticated(true);
-
-        }, 1000);
-        */
-      } else {
-
-
-
-        setError('Usuario y/o contraseña incorrectos');
+          setError('');
+        } else {
+          setError(loginResult.error || 'Error en el login');
+        }
+      } catch (error) {
+        console.error('Error en handleSubmit:', error);
+        setError('Error inesperado durante el login');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -354,10 +428,22 @@ export const useAuth = () => {
     phoneNumber,
     position,
     confirmPassword,
+    
+    // Estados de loading específicos
+    sendingCode,
+    verifyingCode,
+    changingPassword,
     forgotPasswordEmail,
     recoveryCode,
     newPassword,
     confirmNewPassword,
+    
+    // Estados de Jotai
+    user: authJotai.user,
+    token: authJotai.token,
+    authState: authJotai.authState,
+    authError: authJotai.authError,
+    authLoading: authJotai.loading,
     
     // Setters
     setShowPassword,
@@ -410,5 +496,16 @@ export const useAuth = () => {
     handleVerifyRecoveryCode,
     handleChangePassword,
     handleSubmit,
+    
+    // Funciones de Jotai
+    clearAuthError: authJotai.clearError,
+    getToken: authJotai.getToken,
+    isTokenValid: authJotai.isTokenValid,
+    register: authJotai.register,
+    
+    // Funciones de recuperación de contraseña
+    sendCode: authJotai.sendCode,
+    verifyCode: authJotai.verifyCode,
+    changePasswordAPI: authJotai.changePassword,
   };
 };

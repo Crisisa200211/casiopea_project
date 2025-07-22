@@ -29,6 +29,11 @@ export default function Home() {
     isLoading,
     isAuthenticated,
     
+    // Estados de loading específicos
+    sendingCode,
+    verifyingCode,
+    changingPassword,
+    
     // Funciones de manejo
     handleEmailSubmit,
     handleBackToLogin,
@@ -98,6 +103,7 @@ export default function Home() {
         onSubmit={handleSendRecoveryEmail}
         onCancel={handleCancelForgotPassword}
         error={error}
+        loading={sendingCode}
       />
     );
   }
@@ -110,6 +116,7 @@ export default function Home() {
         onSubmit={handleVerifyRecoveryCode}
         onCancel={handleCancelForgotPassword}
         error={error}
+        loading={verifyingCode}
       />
     );
   }
@@ -121,6 +128,7 @@ export default function Home() {
         onSubmit={handleChangePassword}
         onCancel={handleCancelForgotPassword}
         error={error}
+        loading={changingPassword}
       />
     );
   }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { VALID_EMAILS } from '../../lib/constants/auth';
 
-export default function ForgotPassword({ onSubmit, onCancel, error }) {
+export default function ForgotPassword({ onSubmit, onCancel, error, loading }) {
   const [email, setEmail] = useState('');
 
   // Limpiar el campo de email cuando se monta el componente
@@ -69,8 +69,9 @@ export default function ForgotPassword({ onSubmit, onCancel, error }) {
                   <button
                     type="submit"
                     className="forgot-password-button-primary"
+                    disabled={loading}
                   >
-                    Enviar
+                    {loading ? 'Enviando...' : 'Enviar'}
                   </button>
                 </div>
               </form>

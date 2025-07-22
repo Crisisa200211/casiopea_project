@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { VALID_RECOVERY_CODE } from '../../lib/constants/auth';
 
-export default function RecoveryCode({ email, onSubmit, onCancel, error }) {
+export default function RecoveryCode({ email, onSubmit, onCancel, error, loading }) {
   const [code, setCode] = useState('');
 
   // Limpiar el código cuando se monta el componente
@@ -47,7 +47,7 @@ export default function RecoveryCode({ email, onSubmit, onCancel, error }) {
               <form onSubmit={handleSubmit}>
                 <div className="recovery-code-form-group">
                   <div className="recovery-code-inputs">
-                    {[0, 1, 2, 3, 4].map((index) => (
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
                       <input
                         key={index}
                         type="text"
@@ -58,8 +58,8 @@ export default function RecoveryCode({ email, onSubmit, onCancel, error }) {
                             newCode[index] = e.target.value;
                             setCode(newCode.join(''));
                           
-                          // Auto-focus al siguiente input
-                          if (e.target.value && index < 4) {
+                          // Auto-focus al siguiente input (0-5, así que < 5)
+                          if (e.target.value && index < 5) {
                             const nextInput = document.querySelector(`input[data-index="${index + 1}"]`);
                             if (nextInput) nextInput.focus();
                           }
@@ -89,8 +89,9 @@ export default function RecoveryCode({ email, onSubmit, onCancel, error }) {
                   <button
                     type="submit"
                     className="recovery-code-button-primary"
+                    disabled={loading}
                   >
-                    Verificar
+                    {loading ? 'Verificando...' : 'Verificar'}
                   </button>
                 </div>
               </form>

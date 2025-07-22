@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { AuthProvider } from "./contexts/AuthContext";
+import { JotaiProvider } from "./providers/JotaiProvider";
+import { AuthJotaiProvider } from "./contexts/AuthJotaiContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,9 +30,13 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <JotaiProvider>
+          <AuthJotaiProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </AuthJotaiProvider>
+        </JotaiProvider>
       </body>
     </html>
   );

@@ -55,7 +55,7 @@ export const validateEmail = (email) => {
 
 // Validación de código de recuperación
 export const validateCode = (code) => {
-  return code && code.length === 5 && /^\d{5}$/.test(code);
+  return code && code.length === 6 && /^\d{6}$/.test(code);
 };
 
 // Validar formulario de login

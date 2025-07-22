@@ -9,7 +9,7 @@ import {
   validatePasswordSpecial 
 } from '../../lib/validation';
 
-export default function NewPassword({ onSubmit, onCancel, error }) {
+export default function NewPassword({ onSubmit, onCancel, error, loading }) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [showPasswordRules, setShowPasswordRules] = useState(false);
@@ -181,8 +181,9 @@ export default function NewPassword({ onSubmit, onCancel, error }) {
                   <button
                     type="submit"
                     className="new-password-button-primary"
+                    disabled={loading}
                   >
-                    Aceptar
+                    {loading ? 'Actualizando...' : 'Aceptar'}
                   </button>
                 </div>
 
