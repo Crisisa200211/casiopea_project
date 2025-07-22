@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   validatePasswordLength, 
   validatePasswordUppercase, 
@@ -9,11 +9,13 @@ import {
   validatePasswordSpecial,
   validateAllPasswordRules,
   validateEmail,
-  validateCode,
+  validateCode
+} from '../lib/validation';
+import {
   VALID_CREDENTIALS,
   DEV_CREDENTIALS,
   VALID_EMAILS
-} from '../utils/validation';
+} from '../lib/constants/auth';
 
 export const useAuth = () => {
   // Estados principales
@@ -49,6 +51,28 @@ export const useAuth = () => {
   const [recoveryCode, setRecoveryCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  // Inicializar estado desde localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  // Guardar estado cuando cambia la autenticación
+  useEffect(() => {
+    if (isAuthenticated) {
+      const userData = {
+        email: username,
+        name: 'Usuario Demo',
+        role: 'Administrador'
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [isAuthenticated, username]);
 
   // Funciones de toggle
   const togglePassword = () => setShowPassword(!showPassword);
@@ -149,16 +173,14 @@ export const useAuth = () => {
 
   // Manejo de envío de verificación por email
   const handleEmailSubmit = (email) => {
-    console.log('Confirmando verificación de email para:', email || username);
     setError('');
     setShowVerification(false);
     setShowEmailVerified(true);
   };
 
-  // Manejo de inicio de sesión después de verificación
+  // Manejo de regreso al login después de verificación
   const handleStartSession = () => {
-    console.log('Iniciando sesión...');
-    setIsAuthenticated(true);
+    // En lugar de autenticar automáticamente, regresamos al formulario de login
     clearAllStates();
   };
 
@@ -188,7 +210,6 @@ export const useAuth = () => {
     
     // Guardar el email para usarlo después
     setForgotPasswordEmail(email);
-    console.log('Enviando código de recuperación a:', email);
     setError('');
     setShowForgotPassword(false);
     setShowRecoveryCodeSent(true);
@@ -212,7 +233,6 @@ export const useAuth = () => {
       return;
     }
     
-    console.log('Código verificado exitosamente');
     setError('');
     setShowRecoveryCodeSent(false);
     setShowNewPassword(true);
@@ -236,7 +256,6 @@ export const useAuth = () => {
       return;
     }
     
-    console.log('Contraseña actualizada exitosamente para:', forgotPasswordEmail);
     setError('');
     setShowNewPassword(false);
     setShowPasswordUpdated(true);
@@ -244,10 +263,6 @@ export const useAuth = () => {
 
   // Manejo de envío de formulario principal (login/registro)
   const handleSubmit = (formData) => {
-    console.log('=== INICIO DE handleSubmit ===');
-    console.log('isRegister:', isRegister);
-    console.log('formData recibida:', formData);
-    
     if (isRegister) {
       // Validación para registro
       const { firstName, lastName, maternalLastName, phoneNumber, username, password, confirmPassword } = formData;
@@ -273,16 +288,6 @@ export const useAuth = () => {
         return;
       }
       
-      console.log('Registro exitoso', {
-        firstName,
-        lastName,
-        maternalLastName,
-        phoneNumber,
-        position: 'Administrador',
-        username,
-        password
-      });
-      
       setError('');
       setShowVerification(true);
     } else {
@@ -294,32 +299,30 @@ export const useAuth = () => {
         return;
       }
       
-      console.log('Login attempt', { username, password });
-      
       // Simular validación de credenciales
       const isValidMain = username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password;
       const isValidDev = username === DEV_CREDENTIALS.username && password === DEV_CREDENTIALS.password;
       
       if (isValidMain || isValidDev) {
         setError('');
-        console.log('✅ Credenciales válidas - Autenticando inmediatamente...');
+
         setIsAuthenticated(true);
-        console.log('✅ isAuthenticated establecido a true');
+
         
         // Comentando el timeout temporalmente para testing
         /*
         setIsLoading(true);
         setTimeout(() => {
-          console.log('Timeout completado, estableciendo isAuthenticated a true');
+
           setIsLoading(false);
           setIsAuthenticated(true);
-          console.log('Usuario autenticado correctamente, isAuthenticated establecido a true');
+
         }, 1000);
         */
       } else {
-        console.log('Credenciales incorrectas:', { username, password });
-        console.log('Esperadas Main:', VALID_CREDENTIALS);
-        console.log('Esperadas Dev:', DEV_CREDENTIALS);
+
+
+
         setError('Usuario y/o contraseña incorrectos');
       }
     }

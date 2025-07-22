@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { VALID_EMAILS } from '../../utils/validation';
+import { VALID_EMAILS } from '../../lib/constants/auth';
 
 export default function ForgotPassword({ onSubmit, onCancel, error }) {
   const [email, setEmail] = useState('');

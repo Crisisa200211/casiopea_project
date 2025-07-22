@@ -8,7 +8,6 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const authData = useAuth();
   
-  console.log('🔐 AuthProvider - isAuthenticated:', authData.isAuthenticated);
   
   return (
     <AuthContext.Provider value={authData}>

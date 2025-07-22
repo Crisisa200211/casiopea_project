@@ -8,7 +8,7 @@ import {
   validatePasswordNumber, 
   validatePasswordSpecial,
   validateAllPasswordRules
-} from '../../utils/validation';
+} from '../../lib/validation';
 
 export default function LoginRegister({ 
   isRegister, 
@@ -75,9 +75,9 @@ export default function LoginRegister({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('🚀 LoginRegister handleSubmit ejecutándose');
-    console.log('📝 formData que se enviará:', formData);
-    console.log('🔄 isRegister:', isRegister);
+
+
+
     onSubmit(formData);
   };
 

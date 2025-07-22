@@ -1,7 +1,7 @@
 "use client";
 
-import PageLayout from '../components/PageLayout';
-import MiPerfil from '../components/pages/MiPerfil';
+import PageLayout from '../../components/common/PageLayout';
+import MiPerfil from '../../components/dashboard/MiPerfil';
 
 export default function MiPerfilPage() {
   return (

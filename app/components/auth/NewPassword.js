@@ -7,7 +7,7 @@ import {
   validatePasswordLowercase, 
   validatePasswordNumber, 
   validatePasswordSpecial 
-} from '../../utils/validation';
+} from '../../lib/validation';
 
 export default function NewPassword({ onSubmit, onCancel, error }) {
   const [showNewPassword, setShowNewPassword] = useState(false);

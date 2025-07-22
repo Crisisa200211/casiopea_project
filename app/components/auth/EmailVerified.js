@@ -30,10 +30,10 @@ export default function EmailVerified({ onBackToLogin, onStartSession }) {
               
               {/* Mensaje */}
               <p className="email-verified-message">
-                Puedes iniciar sesión,
+                Tu correo ha sido verificado exitosamente.
               </p>
               <p className="email-verified-submessage">
-                tu correo ha sido verificado exitosamente.
+                Ahora puedes iniciar sesión con tus credenciales.
               </p>
 
               {/* Botones */}
@@ -50,7 +50,7 @@ export default function EmailVerified({ onBackToLogin, onStartSession }) {
                   className="verification-button-primary"
                   onClick={onStartSession}
                 >
-                  Iniciar sesión
+                  Ir al Login
                 </button>
               </div>
             </div>

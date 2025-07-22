@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { VALID_RECOVERY_CODE } from '../../utils/validation';
+import { VALID_RECOVERY_CODE } from '../../lib/constants/auth';
 
 export default function RecoveryCode({ email, onSubmit, onCancel, error }) {
   const [code, setCode] = useState('');

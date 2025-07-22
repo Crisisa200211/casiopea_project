@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from 'react';
-import Sidebar from './sidebar/Sidebar';
-import MiPerfil from './pages/MiPerfil';
-import Usuarios from './pages/Usuarios';
-import LogoutModal from './modals/LogoutModal';
+import Sidebar from '../common/sidebar/Sidebar';
+import MiPerfil from './MiPerfil';
+import Usuarios from './Usuarios';
+import LogoutModal from '../modal/LogoutModal';
 
 export default function Dashboard({ onLogout }) {
   const [activeSection, setActiveSection] = useState('mi-perfil');

@@ -1,9 +1,9 @@
 "use client";
 
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuthContext } from '../../contexts/AuthContext';
 import Sidebar from './sidebar/Sidebar';
-import LogoutModal from './modals/LogoutModal';
-import LoadingScreen from './auth/LoadingScreen';
+import LogoutModal from '../modal/LogoutModal';
+import LoadingScreen from '../auth/LoadingScreen';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -14,20 +14,20 @@ export default function PageLayout({ children, activeSection }) {
 
   // Redirigir a la página principal si no está autenticado
   useEffect(() => {
-    console.log('🏗️  PageLayout - isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
+
     if (!isLoading && !isAuthenticated) {
-      console.log('🏗️  PageLayout - Usuario no autenticado, redirigiendo a /');
+
       router.push('/');
     }
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
-    console.log('🏗️  PageLayout - Mostrando LoadingScreen');
+
     return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
-    console.log('🏗️  PageLayout - Usuario no autenticado, retornando null');
+
     return null; // Mientras se hace la redirección
   }
 
@@ -40,10 +40,10 @@ export default function PageLayout({ children, activeSection }) {
     // Navegar a las diferentes secciones
     switch (section) {
       case 'usuarios':
-        router.push('/usuarios');
+        router.push('/dashboard/usuarios');
         break;
       case 'mi-perfil':
-        router.push('/mi-perfil');
+        router.push('/dashboard/mi-perfil');
         break;
       default:
         break;
@@ -63,7 +63,7 @@ export default function PageLayout({ children, activeSection }) {
     setShowLogoutModal(false);
   };
 
-  console.log('🏗️  PageLayout - Renderizando dashboard para activeSection:', activeSection);
+
   
   return (
     <div className="dashboard">

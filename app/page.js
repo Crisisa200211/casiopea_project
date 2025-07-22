@@ -45,46 +45,28 @@ export default function Home() {
 
   // Redirigir al perfil cuando se autentica (solo si no hay otros flujos activos)
   useEffect(() => {
-    console.log('🔄 useEffect ejecutándose. isAuthenticated:', isAuthenticated);
-    console.log('📋 Estados de flujo:', {
-      showVerification,
-      showEmailVerified,
-      showForgotPassword,
-      showRecoveryCodeSent,
-      showNewPassword,
-      showPasswordUpdated
-    });
-    
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoading) {
       // Si no hay ningún flujo de autenticación especial activo, redirigir
       const hasActiveFlow = showVerification || showEmailVerified || showForgotPassword || 
                            showRecoveryCodeSent || showNewPassword || showPasswordUpdated;
       
-      console.log('🔀 hasActiveFlow:', hasActiveFlow);
-      
       if (!hasActiveFlow) {
-        console.log('🚀 ¡REDIRIGIENDO A PERFIL!');
-        router.push('/mi-perfil');
-      } else {
-        console.log('⏸️ No redirigiendo porque hay flujos activos');
+        router.replace('/dashboard/mi-perfil'); // Usar replace en lugar de push
+        return; // Evitar renderizado adicional
       }
-    } else {
-      console.log('❌ No autenticado, no redirigiendo');
     }
-  }, [isAuthenticated, showVerification, showEmailVerified, showForgotPassword, showRecoveryCodeSent, showNewPassword, showPasswordUpdated, router]);
+  }, [isAuthenticated, isLoading, showVerification, showEmailVerified, showForgotPassword, showRecoveryCodeSent, showNewPassword, showPasswordUpdated, router]);
 
   // Pantalla de loading
   if (isLoading) {
-    console.log('Mostrando LoadingScreen - isLoading es true');
     return <LoadingScreen />;
   }
 
-  // Si está autenticado y no hay flujos adicionales, redirigir
+  // Si está autenticado y no hay flujos adicionales, mostrar loading mientras redirecciona
   const hasActiveFlow = showVerification || showEmailVerified || showForgotPassword || 
                         showRecoveryCodeSent || showNewPassword || showPasswordUpdated;
   
   if (isAuthenticated && !hasActiveFlow) {
-    console.log('Usuario autenticado sin flujos activos - Mostrando LoadingScreen mientras redirecciona');
     return <LoadingScreen />; // Mostrar loading mientras redirecciona
   }
 
@@ -104,7 +86,7 @@ export default function Home() {
     return (
       <EmailVerified
         onStartSession={handleStartSession}
-        onCancel={handleBackToLogin}
+        onBackToLogin={handleBackToLogin}
       />
     );
   }
