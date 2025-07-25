@@ -284,7 +284,7 @@ export default function AddUserModal({ isOpen, onClose, onSave, editingUser }) {
                 {errors.email && <div className="invalid-feedback">{errors.email}</div>}
               </div>
               <div className="col-md-6">
-                <label className="form-label">Número telefónico (sin lada)</label>
+                <label className="form-label">Número telefónico</label>
                 <input
                   type="text"
                   className={`form-control ${errors.telefono ? 'is-invalid' : ''}`}
@@ -313,15 +313,15 @@ export default function AddUserModal({ isOpen, onClose, onSave, editingUser }) {
                       onChange={handleInputChange}
                       placeholder="Ingresa la contraseña"
                     />
-                    <button 
-                      className="btn btn-outline-secondary" 
-                      type="button"
+                    <span 
+                      className="input-group-text" 
+                      style={{ cursor: 'pointer' }}
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       <span className="material-icons">
                         {showPassword ? 'visibility_off' : 'visibility'}
                       </span>
-                    </button>
+                    </span>
                     {errors.password && <div className="invalid-feedback">{errors.password}</div>}
                   </div>
                   
@@ -367,15 +367,15 @@ export default function AddUserModal({ isOpen, onClose, onSave, editingUser }) {
                       onChange={handleInputChange}
                       placeholder="Confirma la contraseña"
                     />
-                    <button 
-                      className="btn btn-outline-secondary" 
-                      type="button"
+                    <span 
+                      className="input-group-text" 
+                      style={{ cursor: 'pointer' }}
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
                       <span className="material-icons">
                         {showConfirmPassword ? 'visibility_off' : 'visibility'}
                       </span>
-                    </button>
+                    </span>
                     {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
                   </div>
                   

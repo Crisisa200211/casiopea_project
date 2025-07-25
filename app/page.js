@@ -9,11 +9,12 @@ import RecoveryCode from './components/auth/RecoveryCode';
 import NewPassword from './components/auth/NewPassword';
 import PasswordUpdated from './components/auth/PasswordUpdated';
 import LoadingScreen from './components/auth/LoadingScreen';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
   const {
     // Estados de flujo
     showVerification,
@@ -51,6 +52,11 @@ export default function Home() {
   // Redirigir al perfil cuando se autentica (solo si no hay otros flujos activos)
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
+      // Si ya está en una ruta del dashboard, no redirigir
+      if (pathname.startsWith('/dashboard')) {
+        return;
+      }
+      
       // Si no hay ningún flujo de autenticación especial activo, redirigir
       const hasActiveFlow = showVerification || showEmailVerified || showForgotPassword || 
                            showRecoveryCodeSent || showNewPassword || showPasswordUpdated;
@@ -60,7 +66,7 @@ export default function Home() {
         return; // Evitar renderizado adicional
       }
     }
-  }, [isAuthenticated, isLoading, showVerification, showEmailVerified, showForgotPassword, showRecoveryCodeSent, showNewPassword, showPasswordUpdated, router]);
+  }, [isAuthenticated, isLoading, pathname, showVerification, showEmailVerified, showForgotPassword, showRecoveryCodeSent, showNewPassword, showPasswordUpdated, router]);
 
   // Pantalla de loading solo durante login/registro o procesos específicos
   if (isLoading && (sendingCode || verifyingCode || changingPassword)) {
@@ -68,10 +74,11 @@ export default function Home() {
   }
 
   // Si está autenticado y no hay flujos adicionales, mostrar loading mientras redirecciona
+  // PERO solo si no está ya en el dashboard
   const hasActiveFlow = showVerification || showEmailVerified || showForgotPassword || 
                         showRecoveryCodeSent || showNewPassword || showPasswordUpdated;
   
-  if (isAuthenticated && !hasActiveFlow) {
+  if (isAuthenticated && !hasActiveFlow && !pathname.startsWith('/dashboard')) {
     return <LoadingScreen />; // Mostrar loading mientras redirecciona
   }
 

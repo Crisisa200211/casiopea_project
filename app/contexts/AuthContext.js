@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useContext } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthJotai } from '../hooks/useAuthJotai';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const authData = useAuth();
-  
+  // Usar directamente useAuthJotai que maneja la persistencia real
+  const authData = useAuthJotai();
   
   return (
     <AuthContext.Provider value={authData}>

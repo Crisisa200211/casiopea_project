@@ -123,8 +123,6 @@ export default function Usuarios() {
         const result = await updateUser(editingUser.id, userData);
         
         if (result.success) {
-          console.log('Usuario actualizado:', result.data);
-          
           // Recargar la lista de usuarios
           await loadUsers();
           
@@ -148,8 +146,6 @@ export default function Usuarios() {
         const result = await createUser(newUserData);
         
         if (result.success) {
-          console.log('Usuario creado:', result.data);
-          
           // Recargar la lista de usuarios
           await loadUsers();
           

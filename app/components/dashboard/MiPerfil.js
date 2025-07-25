@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { updateUserData } from '../../lib/api/auth';
 
 export default function MiPerfil() {
-  const { user, fetchUserData, updateUserProfile, changeUserPassword } = useAuthContext();
+  const { user, setUser, changeUserPassword } = useAuthContext();
   
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -13,6 +14,8 @@ export default function MiPerfil() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
+  const [profileMessageType, setProfileMessageType] = useState('success'); // 'success' o 'error'
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false); // Loading específico para actualizar perfil
   const [passwordMessage, setPasswordMessage] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   
@@ -97,6 +100,7 @@ export default function MiPerfil() {
       phoneNumber !== originalValues.phoneNumber;
 
     if (hasChanges) {
+      setIsUpdatingProfile(true); // Activar loading específico
       try {
         // Preparar los datos para enviar a la API
         const updateData = {
@@ -106,10 +110,15 @@ export default function MiPerfil() {
           phoneNumber: phoneNumber.startsWith('+52') ? phoneNumber : `+52${phoneNumber}`
         };
 
-        // Llamar a la API para actualizar los datos
-        const result = await updateUserProfile(user.id, updateData);
+        // Llamar a la API para actualizar los datos directamente (sin loading global)
+        const result = await updateUserData(user.id, updateData);
 
         if (result.success) {
+          // Actualizar el usuario en el contexto manualmente
+          if (setUser) {
+            setUser(result.data);
+          }
+          
           // Actualizar los valores originales para reflejar los nuevos datos
           setOriginalValues({
             nombre: nombre,
@@ -119,15 +128,20 @@ export default function MiPerfil() {
           });
           
           setProfileMessage('¡Información personal actualizada correctamente!');
+          setProfileMessageType('success');
           setTimeout(() => setProfileMessage(''), 5000);
         } else {
           setProfileMessage(`Error: ${result.error}`);
+          setProfileMessageType('error');
           setTimeout(() => setProfileMessage(''), 5000);
         }
       } catch (error) {
         console.error('Error actualizando perfil:', error);
         setProfileMessage('Error al actualizar la información. Por favor, intenta de nuevo.');
+        setProfileMessageType('error');
         setTimeout(() => setProfileMessage(''), 5000);
+      } finally {
+        setIsUpdatingProfile(false); // Desactivar loading específico
       }
     }
     // Si no hay cambios, no hacer nada (no mostrar mensaje)
@@ -140,6 +154,7 @@ export default function MiPerfil() {
     setEmail(originalValues.email);
     setPhoneNumber(originalValues.phoneNumber);
     setProfileMessage(''); // Limpiar cualquier mensaje existente
+    setProfileMessageType('success'); // Reset al tipo por defecto
   };
 
   const handleChangePassword = async () => {
@@ -248,18 +263,39 @@ export default function MiPerfil() {
               
               {/* Mensaje de estado para información personal */}
               {profileMessage && (
-                <div className="alert alert-success text-center mt-3" role="alert">
-                  <span className="material-icons me-2" style={{verticalAlign: 'middle'}}>check_circle</span>
+                <div className={`alert ${profileMessageType === 'success' ? 'alert-primary' : 'alert-danger'} text-center mt-3`} role="alert">
+                  <span className="material-icons me-2" style={{verticalAlign: 'middle'}}>
+                    {profileMessageType === 'success' ? 'check_circle' : 'error'}
+                  </span>
                   {profileMessage}
                 </div>
               )}
               
               <div className="d-flex justify-content-center gap-3 mt-4">
-                <button className="btn btn-primary d-flex align-items-center" onClick={handleSaveProfile}>
-                  <span className="material-icons me-2">save</span>
-                  Guardar cambios
+                <button 
+                  type="button"
+                  className="btn btn-primary d-flex align-items-center" 
+                  onClick={handleSaveProfile}
+                  disabled={isUpdatingProfile}
+                >
+                  {isUpdatingProfile ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-icons me-2">save</span>
+                      Guardar cambios
+                    </>
+                  )}
                 </button>
-                <button className="btn btn-outline-secondary d-flex align-items-center" onClick={handleCancelProfile}>
+                <button 
+                  type="button"
+                  className="btn btn-outline-secondary d-flex align-items-center" 
+                  onClick={handleCancelProfile}
+                  disabled={isUpdatingProfile}
+                >
                   <span className="material-icons me-2">refresh</span>
                   Cancelar
                 </button>
@@ -282,15 +318,17 @@ export default function MiPerfil() {
                         className="form-control" 
                         placeholder="Contraseña actual"
                       />
-                      <button 
-                        className="btn btn-outline-secondary" 
-                        type="button"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      >
-                        <span className="material-icons">
-                          {showCurrentPassword ? 'visibility_off' : 'visibility'}
-                        </span>
-                      </button>
+                      <span className="input-group-text p-0">
+                        <button 
+                          className="btn btn-link text-muted border-0 h-100 px-3" 
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        >
+                          <span className="material-icons" style={{fontSize: '20px'}}>
+                            {showCurrentPassword ? 'visibility_off' : 'visibility'}
+                          </span>
+                        </button>
+                      </span>
                     </div>
                   </div>
                   
@@ -304,15 +342,17 @@ export default function MiPerfil() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                       />
-                      <button 
-                        className="btn btn-outline-secondary" 
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        <span className="material-icons">
-                          {showNewPassword ? 'visibility_off' : 'visibility'}
-                        </span>
-                      </button>
+                      <span className="input-group-text p-0">
+                        <button 
+                          className="btn btn-link text-muted border-0 h-100 px-3" 
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                        >
+                          <span className="material-icons" style={{fontSize: '20px'}}>
+                            {showNewPassword ? 'visibility_off' : 'visibility'}
+                          </span>
+                        </button>
+                      </span>
                     </div>
                     
                     {/* Indicadores de seguridad de contraseña */}
@@ -365,15 +405,17 @@ export default function MiPerfil() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                       />
-                      <button 
-                        className="btn btn-outline-secondary" 
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        <span className="material-icons">
-                          {showConfirmPassword ? 'visibility_off' : 'visibility'}
-                        </span>
-                      </button>
+                      <span className="input-group-text p-0">
+                        <button 
+                          className="btn btn-link text-muted border-0 h-100 px-3" 
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          <span className="material-icons" style={{fontSize: '20px'}}>
+                            {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                          </span>
+                        </button>
+                      </span>
                     </div>
                   </div>
                   
