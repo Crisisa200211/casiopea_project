@@ -62,8 +62,8 @@ export default function Home() {
     }
   }, [isAuthenticated, isLoading, showVerification, showEmailVerified, showForgotPassword, showRecoveryCodeSent, showNewPassword, showPasswordUpdated, router]);
 
-  // Pantalla de loading
-  if (isLoading) {
+  // Pantalla de loading solo durante login/registro o procesos específicos
+  if (isLoading && (sendingCode || verifyingCode || changingPassword)) {
     return <LoadingScreen />;
   }
 

@@ -13,10 +13,17 @@ const apiClient = axios.create({
 // Interceptor para requests - agregar token si existe
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
+    let token = localStorage.getItem('auth_token');
+    
     if (token) {
+      // Limpiar comillas si existen (problema común con atomWithStorage)
+      if (token.startsWith('"') && token.endsWith('"')) {
+        token = token.slice(1, -1);
+      }
+      
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => {
@@ -31,11 +38,12 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Solo redirigir si NO es un intento de login
+      // Solo redirigir si NO es un intento de login, register o operaciones de usuario
       const isLoginRequest = error.config?.url?.includes('/auth/login');
       const isRegisterRequest = error.config?.url?.includes('/auth/register');
+      const isUserOperation = error.config?.url?.includes('/users/');
       
-      if (!isLoginRequest && !isRegisterRequest) {
+      if (!isLoginRequest && !isRegisterRequest && !isUserOperation) {
         // Token expirado o inválido en otras operaciones - limpiar auth y redirigir
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
@@ -44,7 +52,7 @@ apiClient.interceptors.response.use(
           window.location.href = '/';
         }
       }
-      // Si es login/register, dejar que el componente maneje el error
+      // Si es login/register/user operations, dejar que el componente maneje el error
     }
     return Promise.reject(error);
   }
@@ -309,6 +317,169 @@ export const resetPassword = async (email, newPassword) => {
           break;
         case 401:
           errorMessage = 'Sesión expirada, solicita un nuevo código';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        default:
+          errorMessage = data?.message || `Error ${status}`;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor';
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+// Función para obtener datos del usuario
+export const getUserData = async (userId) => {
+  try {
+    const response = await apiClient.get(`/users/${userId}`);
+
+    if (response.data && response.data.statusCode === 200) {
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Respuesta inesperada del servidor',
+      };
+    }
+  } catch (error) {
+    console.error('Error obteniendo datos del usuario:', error);
+    
+    let errorMessage = 'Error de conexión con el servidor';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 401:
+          errorMessage = 'No autorizado para acceder a estos datos';
+          break;
+        case 404:
+          errorMessage = 'Usuario no encontrado';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        default:
+          errorMessage = data?.message || `Error ${status}`;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor';
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+// Función para actualizar datos del usuario
+export const updateUserData = async (userId, userData) => {
+  try {
+    const response = await apiClient.put(`/users/${userId}`, {
+      email: userData.email,
+      name: userData.name,
+      lastName: userData.lastName,
+      phoneNumber: userData.phoneNumber,
+    });
+
+    if (response.data && (response.data.statusCode === 200 || response.data.statusCode === 201)) {
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Respuesta inesperada del servidor',
+      };
+    }
+  } catch (error) {
+    console.error('Error actualizando datos del usuario:', error);
+    
+    let errorMessage = 'Error de conexión con el servidor';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 400:
+          errorMessage = data?.message || 'Datos inválidos';
+          break;
+        case 401:
+          errorMessage = 'Tu sesión ha expirado o no tienes permisos para actualizar estos datos. Por favor, cierra sesión e inicia sesión nuevamente.';
+          break;
+        case 404:
+          errorMessage = 'Usuario no encontrado';
+          break;
+        case 409:
+          errorMessage = 'El email ya está en uso por otro usuario';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        default:
+          errorMessage = data?.message || `Error ${status}`;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor';
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+// Función para cambiar contraseña del usuario
+export const changeUserPassword = async (userId, newPassword) => {
+  try {
+    const response = await apiClient.put(`/users/reset-password-user/${userId}`, {
+      newPassword: newPassword,
+    });
+
+    if (response.data && (response.data.statusCode === 200 || response.data.statusCode === 201)) {
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Respuesta inesperada del servidor',
+      };
+    }
+  } catch (error) {
+    console.error('Error cambiando contraseña del usuario:', error);
+    
+    let errorMessage = 'Error de conexión con el servidor';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 400:
+          errorMessage = data?.message || 'La nueva contraseña no cumple con los requisitos';
+          break;
+        case 401:
+          errorMessage = 'Tu sesión ha expirado. Por favor, cierra sesión e inicia sesión nuevamente.';
+          break;
+        case 404:
+          errorMessage = 'Usuario no encontrado';
           break;
         case 500:
           errorMessage = 'Error interno del servidor';

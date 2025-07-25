@@ -50,6 +50,7 @@ export default function LoadingScreen() {
           justify-content: center;
           align-items: center;
           z-index: 9999;
+          overscroll-behavior: none;
         }
         
         .loading-content {

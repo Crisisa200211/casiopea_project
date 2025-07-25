@@ -53,7 +53,7 @@ export default function Dashboard({ onLogout }) {
       <LogoutModal 
         isOpen={showLogoutModal}
         onConfirm={handleLogoutConfirm}
-        onClose={handleLogoutCancel}
+        onCancel={handleLogoutCancel}
       />
     </div>
   );

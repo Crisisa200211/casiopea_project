@@ -10,7 +10,7 @@ import {
   authStateAtom,
   clearAuthAtom,
 } from '../lib/atoms/auth';
-import { loginUser, registerUser, sendRecoveryCode, verifyRecoveryCode, resetPassword } from '../lib/api/auth';
+import { loginUser, registerUser, sendRecoveryCode, verifyRecoveryCode, resetPassword, getUserData, updateUserData, changeUserPassword } from '../lib/api/auth';
 
 export const useAuthJotai = () => {
   const [token, setToken] = useAtom(tokenAtom);
@@ -32,12 +32,28 @@ export const useAuthJotai = () => {
       if (result.success) {
         setToken(result.token);
         
-        // Decodificar JWT para obtener datos del usuario
-        const userData = decodeJWT(result.token);
-        setUser(userData);
+        // Decodificar JWT para obtener el ID del usuario
+        const tokenData = decodeJWT(result.token);
         
-        setAuthError(null);
-        return { success: true, user: userData };
+        if (tokenData && tokenData.sub) {
+          // Obtener datos completos del usuario usando el ID del token
+          const userDataResult = await getUserData(tokenData.sub);
+          
+          if (userDataResult.success) {
+            setUser(userDataResult.data);
+            setAuthError(null);
+            return { success: true, user: userDataResult.data, token: result.token };
+          } else {
+            // Si no se pueden obtener los datos del usuario, usar datos básicos del token
+            setUser(tokenData);
+            setAuthError(null);
+            return { success: true, user: tokenData, token: result.token };
+          }
+        } else {
+          setUser(tokenData);
+          setAuthError(null);
+          return { success: true, user: tokenData, token: result.token };
+        }
       } else {
         setAuthError(result.error);
         return { success: false, error: result.error };
@@ -175,6 +191,82 @@ export const useAuthJotai = () => {
     }
   };
 
+  // Función para obtener datos del usuario
+  const fetchUserData = async (userId) => {
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      const result = await getUserData(userId);
+
+      if (result.success) {
+        // Actualizar los datos del usuario en el estado global
+        setUser(result.data);
+        setAuthError(null);
+        return { success: true, data: result.data };
+      } else {
+        setAuthError(result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Error obteniendo datos del usuario';
+      setAuthError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para actualizar datos del usuario
+  const updateUserProfile = async (userId, userData) => {
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      const result = await updateUserData(userId, userData);
+
+      if (result.success) {
+        // Actualizar los datos del usuario en el estado global
+        setUser(result.data);
+        setAuthError(null);
+        return { success: true, data: result.data };
+      } else {
+        setAuthError(result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Error actualizando datos del usuario';
+      setAuthError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para cambiar contraseña del usuario desde su perfil
+  const changeUserPasswordProfile = async (userId, newPassword) => {
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      const result = await changeUserPassword(userId, newPassword);
+
+      if (result.success) {
+        setAuthError(null);
+        return { success: true, message: 'Contraseña actualizada correctamente' };
+      } else {
+        setAuthError(result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Error cambiando la contraseña';
+      setAuthError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Función para limpiar errores
   const clearError = () => {
     setAuthError(null);
@@ -227,6 +319,15 @@ export const useAuthJotai = () => {
     sendCode,
     verifyCode,
     changePassword,
+
+    // Función para obtener datos del usuario
+    fetchUserData,
+    
+    // Función para actualizar datos del usuario
+    updateUserProfile,
+
+    // Función para cambiar contraseña desde el perfil
+    changeUserPasswordProfile,
 
     // Setters directos (para casos especiales)
     setToken,

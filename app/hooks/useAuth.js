@@ -507,5 +507,14 @@ export const useAuth = () => {
     sendCode: authJotai.sendCode,
     verifyCode: authJotai.verifyCode,
     changePasswordAPI: authJotai.changePassword,
+    
+    // Función para obtener datos del usuario
+    fetchUserData: authJotai.fetchUserData,
+    
+    // Función para actualizar datos del usuario
+    updateUserProfile: authJotai.updateUserProfile,
+    
+    // Función para cambiar contraseña desde el perfil
+    changeUserPassword: authJotai.changeUserPasswordProfile,
   };
 };

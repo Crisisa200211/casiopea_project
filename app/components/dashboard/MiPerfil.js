@@ -1,30 +1,67 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 export default function MiPerfil() {
+  const { user, fetchUserData, updateUserProfile, changeUserPassword } = useAuthContext();
+  
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('5551234567');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   
   // Estados para los campos del formulario
-  const [nombre, setNombre] = useState('Usuario Demo');
-  const [apellidoPaterno, setApellidoPaterno] = useState('García');
-  const [apellidoMaterno, setApellidoMaterno] = useState('López');
-  const [email, setEmail] = useState('usuario@demo.com');
+  const [nombre, setNombre] = useState('');
+  const [apellidos, setApellidos] = useState('');
+  const [email, setEmail] = useState('');
   
   // Valores originales para restaurar
-  const originalValues = {
-    nombre: 'Usuario Demo',
-    apellidoPaterno: 'García',
-    apellidoMaterno: 'López',
-    email: 'usuario@demo.com',
-    phoneNumber: '5551234567'
-  };
+  const [originalValues, setOriginalValues] = useState({
+    nombre: '',
+    apellidos: '',
+    email: '',
+    phoneNumber: ''
+  });
+
+  // Efecto para cargar datos del usuario
+  useEffect(() => {
+    if (user) {
+      // Función para quitar el lada del número de teléfono
+      const formatPhoneNumber = (phone) => {
+        if (!phone) return '';
+        // Quitar caracteres no numéricos
+        const numbersOnly = phone.replace(/\D/g, '');
+        // Si empieza con +52, quitar esos dígitos
+        if (numbersOnly.startsWith('52') && numbersOnly.length > 10) {
+          return numbersOnly.substring(2);
+        }
+        // Si empieza con +521, quitar esos dígitos  
+        if (numbersOnly.startsWith('521') && numbersOnly.length > 10) {
+          return numbersOnly.substring(3);
+        }
+        return numbersOnly;
+      };
+      
+      const userData = {
+        nombre: user.name || '',
+        apellidos: user.lastName || '',
+        email: user.email || '',
+        phoneNumber: formatPhoneNumber(user.phoneNumber)
+      };
+      
+      setNombre(userData.nombre);
+      setApellidos(userData.apellidos);
+      setEmail(userData.email);
+      setPhoneNumber(userData.phoneNumber);
+      setOriginalValues(userData);
+    }
+  }, [user]);
 
   // Validaciones de contraseña segura
   const validatePassword = (password) => {
@@ -51,18 +88,47 @@ export default function MiPerfil() {
     setPhoneNumber(value);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     // Verificar si hubo cambios comparando con los valores originales
     const hasChanges = 
       nombre !== originalValues.nombre ||
-      apellidoPaterno !== originalValues.apellidoPaterno ||
-      apellidoMaterno !== originalValues.apellidoMaterno ||
+      apellidos !== originalValues.apellidos ||
       email !== originalValues.email ||
       phoneNumber !== originalValues.phoneNumber;
 
     if (hasChanges) {
-      setProfileMessage('¡Información personal actualizada correctamente!');
-      setTimeout(() => setProfileMessage(''), 5000);
+      try {
+        // Preparar los datos para enviar a la API
+        const updateData = {
+          email: email,
+          name: nombre,
+          lastName: apellidos,
+          phoneNumber: phoneNumber.startsWith('+52') ? phoneNumber : `+52${phoneNumber}`
+        };
+
+        // Llamar a la API para actualizar los datos
+        const result = await updateUserProfile(user.id, updateData);
+
+        if (result.success) {
+          // Actualizar los valores originales para reflejar los nuevos datos
+          setOriginalValues({
+            nombre: nombre,
+            apellidos: apellidos,
+            email: email,
+            phoneNumber: phoneNumber
+          });
+          
+          setProfileMessage('¡Información personal actualizada correctamente!');
+          setTimeout(() => setProfileMessage(''), 5000);
+        } else {
+          setProfileMessage(`Error: ${result.error}`);
+          setTimeout(() => setProfileMessage(''), 5000);
+        }
+      } catch (error) {
+        console.error('Error actualizando perfil:', error);
+        setProfileMessage('Error al actualizar la información. Por favor, intenta de nuevo.');
+        setTimeout(() => setProfileMessage(''), 5000);
+      }
     }
     // Si no hay cambios, no hacer nada (no mostrar mensaje)
   };
@@ -70,16 +136,53 @@ export default function MiPerfil() {
   const handleCancelProfile = () => {
     // Restaurar valores originales sin mensaje
     setNombre(originalValues.nombre);
-    setApellidoPaterno(originalValues.apellidoPaterno);
-    setApellidoMaterno(originalValues.apellidoMaterno);
+    setApellidos(originalValues.apellidos);
     setEmail(originalValues.email);
     setPhoneNumber(originalValues.phoneNumber);
     setProfileMessage(''); // Limpiar cualquier mensaje existente
   };
 
-  const handleChangePassword = () => {
-    setPasswordMessage('¡Contraseña cambiada exitosamente!');
-    setTimeout(() => setPasswordMessage(''), 5000);
+  const handleChangePassword = async () => {
+    // Limpiar mensajes previos
+    setPasswordMessage('');
+    
+    // Validaciones
+    if (!newPassword || !confirmPassword) {
+      setPasswordMessage('Todos los campos son obligatorios');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage('Las contraseñas no coinciden');
+      return;
+    }
+    
+    // Validar formato de contraseña
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      setPasswordMessage('La contraseña no cumple con los requisitos de seguridad');
+      return;
+    }
+    
+    setIsChangingPassword(true);
+    
+    try {
+      const result = await changeUserPassword(user.id, newPassword);
+      
+      if (result.success) {
+        setPasswordMessage('¡Contraseña cambiada exitosamente!');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setPasswordMessage(''), 5000);
+      } else {
+        setPasswordMessage(result.error || 'Error al cambiar la contraseña');
+      }
+    } catch (error) {
+      console.error('Error cambiando contraseña:', error);
+      setPasswordMessage('Error inesperado al cambiar la contraseña');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   return (
@@ -119,16 +222,16 @@ export default function MiPerfil() {
                 </div>
               </div>
 
-              {/* Fila 2: Apellido Paterno y Correo Electrónico */}
+              {/* Fila 2: Apellido(s) y Correo Electrónico */}
               <div className="row mb-3">
                 <div className="col-md-6">
-                  <label className="form-label">Apellido Paterno</label>
+                  <label className="form-label">Apellido(s)</label>
                   <input 
                     type="text" 
                     className="form-control" 
-                    placeholder="Apellido paterno"
-                    value={apellidoPaterno}
-                    onChange={(e) => setApellidoPaterno(e.target.value)}
+                    placeholder="Apellidos completos"
+                    value={apellidos}
+                    onChange={(e) => setApellidos(e.target.value)}
                   />
                 </div>
                 <div className="col-md-6">
@@ -140,31 +243,6 @@ export default function MiPerfil() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
-                </div>
-              </div>
-
-              {/* Fila 3: Apellido Materno y Rol */}
-              <div className="row mb-3">
-                <div className="col-md-6">
-                  <label className="form-label">Apellido Materno</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Apellido materno"
-                    value={apellidoMaterno}
-                    onChange={(e) => setApellidoMaterno(e.target.value)}
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label">Rol</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    value="Administrador"
-                    readOnly
-                    style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
-                  />
-                  <div className="form-text">Este campo no se puede modificar</div>
                 </div>
               </div>
               
@@ -284,6 +362,8 @@ export default function MiPerfil() {
                         type={showConfirmPassword ? "text" : "password"}
                         className="form-control" 
                         placeholder="Confirmar nueva contraseña"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                       />
                       <button 
                         className="btn btn-outline-secondary" 
@@ -308,11 +388,20 @@ export default function MiPerfil() {
                   <div className="mt-4">
                     <button 
                       className="btn btn-warning d-flex align-items-center"
-                      disabled={!passwordValidation.isValid}
+                      disabled={!passwordValidation.isValid || isChangingPassword}
                       onClick={handleChangePassword}
                     >
-                      <span className="material-icons me-2">lock</span>
-                      Cambiar contraseña
+                      {isChangingPassword ? (
+                        <>
+                          <div className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                          Cambiando contraseña...
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-icons me-2">lock</span>
+                          Cambiar contraseña
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
