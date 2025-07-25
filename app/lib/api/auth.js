@@ -498,4 +498,168 @@ export const changeUserPassword = async (userId, newPassword) => {
   }
 };
 
+// Función para obtener todos los usuarios
+export const getAllUsers = async () => {
+  try {
+    const response = await apiClient.get('/users');
+    
+    if (response.data && response.data.statusCode === 200) {
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Error al obtener usuarios',
+      };
+    }
+  } catch (error) {
+    console.error('Error obteniendo usuarios:', error);
+    
+    let errorMessage = 'Error de conexión con el servidor';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 401:
+          errorMessage = 'No autorizado para ver usuarios';
+          break;
+        case 403:
+          errorMessage = 'Sin permisos para acceder a usuarios';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        default:
+          errorMessage = data?.message || `Error ${status}`;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor';
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+// Función para actualizar un usuario específico
+export const updateUser = async (userId, userData) => {
+  try {
+    const response = await apiClient.put(`/users/${userId}`, userData);
+    
+    if (response.data && response.data.statusCode === 200) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: 'Usuario actualizado exitosamente',
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Error al actualizar usuario',
+      };
+    }
+  } catch (error) {
+    console.error('Error actualizando usuario:', error);
+    
+    let errorMessage = 'Error de conexión con el servidor';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 400:
+          errorMessage = data?.message || 'Datos de usuario inválidos';
+          break;
+        case 401:
+          errorMessage = 'No autorizado para actualizar usuarios';
+          break;
+        case 403:
+          errorMessage = 'Sin permisos para actualizar este usuario';
+          break;
+        case 404:
+          errorMessage = 'Usuario no encontrado';
+          break;
+        case 409:
+          errorMessage = 'El email ya está en uso por otro usuario';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        default:
+          errorMessage = data?.message || `Error ${status}`;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor';
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+// Función para crear un nuevo usuario
+export const createUser = async (userData) => {
+  try {
+    const response = await apiClient.post('/users', userData);
+    
+    if (response.data && response.data.statusCode === 201) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: 'Usuario creado exitosamente',
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Error al crear usuario',
+      };
+    }
+  } catch (error) {
+    console.error('Error creando usuario:', error);
+    
+    let errorMessage = 'Error de conexión con el servidor';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 400:
+          errorMessage = data?.message || 'Datos de usuario inválidos';
+          break;
+        case 401:
+          errorMessage = 'No autorizado para crear usuarios';
+          break;
+        case 403:
+          errorMessage = 'Sin permisos para crear usuarios';
+          break;
+        case 409:
+          errorMessage = 'El email ya está en uso';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        default:
+          errorMessage = data?.message || `Error ${status}`;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor';
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
 export default apiClient;
