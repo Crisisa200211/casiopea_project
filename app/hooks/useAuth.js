@@ -16,11 +16,11 @@ import {
   DEV_CREDENTIALS,
   VALID_EMAILS
 } from '../lib/constants/auth';
-import { useAuthJotaiContext } from '../contexts/AuthJotaiContext';
+import { useAuthContext } from '../contexts/AuthContext';
 
 export const useAuth = () => {
   // Hook de Jotai para autenticación real
-  const authJotai = useAuthJotaiContext();
+  const authJotai = useAuthContext();
 
   // Estados principales
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +42,8 @@ export const useAuth = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showPasswordUpdated, setShowPasswordUpdated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Usar directamente el estado de autenticación de Jotai
+  // const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // Campos adicionales para registro
   const [firstName, setFirstName] = useState('');
@@ -63,15 +64,13 @@ export const useAuth = () => {
 
   // Inicializar estado desde Jotai
   useEffect(() => {
-    // Sincronizar con el estado de Jotai
-    if (authJotai.isAuthenticated) {
-      setIsAuthenticated(true);
-    }
+    // Ya no necesita sincronización local
+    // El estado viene directamente de authJotai.isAuthenticated
   }, [authJotai.isAuthenticated]);
 
   // Guardar estado cuando cambia la autenticación (mantener compatibilidad)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (authJotai.isAuthenticated) {
       const userData = authJotai.user || {
         email: username,
         name: 'Usuario Demo',
@@ -81,7 +80,7 @@ export const useAuth = () => {
     } else {
       localStorage.removeItem('user');
     }
-  }, [isAuthenticated, username, authJotai.user]);
+  }, [authJotai.isAuthenticated, username, authJotai.user]);
 
   // Funciones de toggle
   const togglePassword = () => setShowPassword(!showPassword);
@@ -140,7 +139,7 @@ export const useAuth = () => {
   const handleLogout = () => {
     // Usar el logout de Jotai para limpiar estado global
     authJotai.logout();
-    setIsAuthenticated(false);
+    // No necesita setIsAuthenticated local
     clearAllStates();
   };
 
@@ -388,7 +387,7 @@ export const useAuth = () => {
         });
 
         if (loginResult.success) {
-          setIsAuthenticated(true);
+          // El authJotai ya maneja el estado de autenticación
           setError('');
         } else {
           setError(loginResult.error || 'Error en el login');
@@ -421,7 +420,7 @@ export const useAuth = () => {
     showNewPassword,
     showPasswordUpdated,
     isLoading,
-    isAuthenticated,
+    isAuthenticated: authJotai.isAuthenticated, // Usar directamente de Jotai
     firstName,
     lastName,
     maternalLastName,
@@ -444,6 +443,7 @@ export const useAuth = () => {
     authState: authJotai.authState,
     authError: authJotai.authError,
     authLoading: authJotai.loading,
+    setUser: authJotai.setUser,
     
     // Setters
     setShowPassword,

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { updateUserData } from '../../lib/api/auth';
 
 export default function MiPerfil() {
-  const { user, setUser, changeUserPassword } = useAuthContext();
+  const { user, setUser, changeUserPassword } = useAuth();
   
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);

@@ -1,25 +1,20 @@
 "use client";
 
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import Sidebar from './sidebar/Sidebar';
 import LogoutModal from '../modal/LogoutModal';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function PageLayout({ children, activeSection }) {
-  const { isAuthenticated, handleLogout } = useAuthContext();
+  const { isAuthenticated, handleLogout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
 
-  // Redirigir a la página principal si no está autenticado
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, router]);
-
+  // Solo renderizar si está autenticado, no hacer redirección aquí
+  // La redirección se maneja en el dashboard layout
   if (!isAuthenticated) {
-    return null; // Mientras se hace la redirección
+    return null; // Dejar que el dashboard layout maneje la redirección
   }
 
   const handleSectionChange = (section) => {
@@ -43,10 +38,19 @@ export default function PageLayout({ children, activeSection }) {
 
   const handleLogoutConfirm = () => {
     setShowLogoutModal(false);
-    if (handleLogout) {
-      handleLogout();
-      // Redirigir después del logout
-      router.push('/');
+    
+    try {
+      // Ejecutar logout
+      if (handleLogout) {
+        handleLogout();
+      }
+      
+      // La redirección se manejará automáticamente por el dashboard layout
+      // al detectar que ya no está autenticado
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // En caso de error, forzar redirección
+      router.replace('/');
     }
   };
 

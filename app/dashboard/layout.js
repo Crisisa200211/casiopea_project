@@ -1,29 +1,31 @@
 "use client";
 
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function DashboardLayout({ children }) {
-  const { isAuthenticated, loading } = useAuthContext();
+  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   // Marcar como inicializado después del primer render
   useEffect(() => {
     const timer = setTimeout(() => {
       setHasInitialized(true);
-    }, 100); // Breve delay para permitir que localStorage se cargue
+    }, 100);
 
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    // Solo redirigir si ya se inicializó y definitivamente no está autenticado
-    if (hasInitialized && !loading && !isAuthenticated) {
-      router.push('/');
+    // Solo redirigir una vez y si ya se inicializó
+    if (hasInitialized && !loading && !isAuthenticated && !hasRedirected) {
+      setHasRedirected(true);
+      router.replace('/'); // Usar replace para evitar historial
     }
-  }, [isAuthenticated, loading, hasInitialized, router]);
+  }, [isAuthenticated, loading, hasInitialized, hasRedirected, router]);
 
   // Mostrar loading mientras verifica autenticación o durante inicialización
   if (loading || !hasInitialized) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuthContext } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import LoginRegister from './components/auth/LoginRegister';
 import EmailVerification from './components/auth/EmailVerification';
 import EmailVerified from './components/auth/EmailVerified';
@@ -47,7 +47,7 @@ export default function Home() {
     handleForgotPassword,
     handleCancelForgotPassword,
     handleLogout,
-  } = useAuthContext();
+  } = useAuth();
 
   // Redirigir al perfil cuando se autentica (solo si no hay otros flujos activos)
   useEffect(() => {
@@ -62,8 +62,11 @@ export default function Home() {
                            showRecoveryCodeSent || showNewPassword || showPasswordUpdated;
       
       if (!hasActiveFlow) {
-        router.replace('/dashboard/mi-perfil'); // Usar replace en lugar de push
-        return; // Evitar renderizado adicional
+        // Usar replace y agregar pequeño delay para evitar conflictos
+        setTimeout(() => {
+          router.replace('/dashboard/mi-perfil');
+        }, 100);
+        return;
       }
     }
   }, [isAuthenticated, isLoading, pathname, showVerification, showEmailVerified, showForgotPassword, showRecoveryCodeSent, showNewPassword, showPasswordUpdated, router]);
